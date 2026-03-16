@@ -8,13 +8,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  void pariDevices() async {
-    final bluetoothClassicPlugin = BluetoothClassic();
-    await bluetoothClassicPlugin.initPermissions();
-    List discoveredDevices = await bluetoothClassicPlugin.getPairedDevices();
-    print(discoveredDevices);
-  }
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -63,6 +56,28 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  String pDevices = "";
+
+  @override
+  void initState() {
+    super.initState();
+    loadDevices();
+  }
+
+  Future<void> loadDevices() async {
+    pDevices = await pairedDevices();
+    setState(() {});
+  }
+
+  Future<String> pairedDevices() async {
+    final bluetoothClassicPlugin = BluetoothClassic();
+    await bluetoothClassicPlugin.initPermissions();
+
+    List<dynamic> discoveredDevices = await bluetoothClassicPlugin
+        .getPairedDevices();
+
+    return discoveredDevices.toString();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -113,10 +128,13 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: .center,
           children: [
             const Text('You have pushed the button this many times:'),
+
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+
+            Text(pDevices),
           ],
         ),
       ),
