@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Bluetooth Devices",
+      title: 'Bluetooth Devices',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
@@ -29,7 +29,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String devicesText = "Press button to load devices";
+  final BluetoothClassic bluetooth = BluetoothClassic();
+
+  List<dynamic> devices = [];
 
   @override
   void initState() {
@@ -37,7 +39,6 @@ class _MyHomePageState extends State<MyHomePage> {
     requestPermissions();
   }
 
-  // Request runtime permissions
   Future<void> requestPermissions() async {
     await [
       Permission.bluetooth,
@@ -47,22 +48,17 @@ class _MyHomePageState extends State<MyHomePage> {
     ].request();
   }
 
-  // Get paired devices
   Future<void> getDevices() async {
-    final bluetooth = BluetoothClassic();
-
     try {
       await bluetooth.initPermissions();
 
-      List devices = await bluetooth.getPairedDevices();
+      List<dynamic> paired = await bluetooth.getPairedDevices();
 
       setState(() {
-        devicesText = devices.toString();
+        devices = paired;
       });
     } catch (e) {
-      setState(() {
-        devicesText = "Error: $e";
-      });
+      print("Error: $e");
     }
   }
 
@@ -71,32 +67,24 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(title: const Text("Paired Bluetooth Devices")),
 
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+      body: devices.isEmpty
+          ? const Center(child: Text("Press refresh to load devices"))
+          : ListView.builder(
+              itemCount: devices.length,
+              itemBuilder: (context, index) {
+                var device = devices[index];
 
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+                return ListTile(
+                  leading: const Icon(Icons.bluetooth),
+                  title: Text(device.name ?? "Unknown Device"),
+                  subtitle: Text(device.address),
+                );
+              },
+            ),
 
-            children: [
-              const Text(
-                "Bluetooth Paired Devices",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 20),
-
-              Text(devicesText, textAlign: TextAlign.center),
-
-              const SizedBox(height: 30),
-
-              ElevatedButton(
-                onPressed: getDevices,
-                child: const Text("Get Paired Devices"),
-              ),
-            ],
-          ),
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: getDevices,
+        child: const Icon(Icons.refresh),
       ),
     );
   }
