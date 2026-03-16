@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bluetooth_classic/bluetooth_classic.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,84 +12,90 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bluetooth Demo',
+      title: "Bluetooth Devices",
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(title: 'Bluetooth Paired Devices'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String pDevices = "Loading devices...";
+  String devicesText = "Press button to load devices";
 
   @override
   void initState() {
     super.initState();
-    loadDevices();
+    requestPermissions();
   }
 
-  Future<void> loadDevices() async {
-    String devices = await pairedDevices();
-
-    setState(() {
-      pDevices = devices;
-    });
+  // Request runtime permissions
+  Future<void> requestPermissions() async {
+    await [
+      Permission.bluetooth,
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.location,
+    ].request();
   }
 
-  Future<String> pairedDevices() async {
+  // Get paired devices
+  Future<void> getDevices() async {
+    final bluetooth = BluetoothClassic();
+
     try {
-      final bluetoothClassicPlugin = BluetoothClassic();
+      await bluetooth.initPermissions();
 
-      await bluetoothClassicPlugin.initPermissions();
+      List devices = await bluetooth.getPairedDevices();
 
-      List<dynamic> discoveredDevices = await bluetoothClassicPlugin
-          .getPairedDevices();
-
-      return discoveredDevices.toString();
+      setState(() {
+        devicesText = devices.toString();
+      });
     } catch (e) {
-      return "Error getting devices";
+      setState(() {
+        devicesText = "Error: $e";
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
+      appBar: AppBar(title: const Text("Paired Bluetooth Devices")),
 
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Paired Bluetooth Devices",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
 
-            const SizedBox(height: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
 
-            Text(pDevices, textAlign: TextAlign.center),
+            children: [
+              const Text(
+                "Bluetooth Paired Devices",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
 
-            const SizedBox(height: 30),
+              const SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: loadDevices,
-              child: const Text("Refresh Devices"),
-            ),
-          ],
+              Text(devicesText, textAlign: TextAlign.center),
+
+              const SizedBox(height: 30),
+
+              ElevatedButton(
+                onPressed: getDevices,
+                child: const Text("Get Paired Devices"),
+              ),
+            ],
+          ),
         ),
       ),
     );
