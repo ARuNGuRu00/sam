@@ -49,7 +49,6 @@ class _BluetoothPageState extends State<BluetoothPage> {
       Permission.bluetooth,
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
-      Permission.location,
     ].request();
   }
 
