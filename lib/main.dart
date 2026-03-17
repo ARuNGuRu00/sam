@@ -61,6 +61,11 @@ class _BluetoothPageState extends State<BluetoothPage> {
 
     setState(() {
       devices = paired;
+      for (var i = 0; i < devices.length; i++) {
+        if (devices[i].name == "32") {
+          connectDevice(devices[i].address);
+        }
+      }
     });
   }
 
